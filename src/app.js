@@ -12,6 +12,12 @@ app.get("/user",(req,res)=>{
    res.send({firstName:"Prateek",lastName:"Srivastava"})
 })
 
+app.get("/userprofile/:userID/:userName",(req,res)=>{
+   console.log("Geting Request body",req.params)
+   res.send({firstName:"Prateek",lastName:"Srivastava"})
+})
+
+
 app.delete("/delete/user/data",(req,res)=>{
    console.log("Data remove from db..")
    res.send("Data Sucessful remove...")
