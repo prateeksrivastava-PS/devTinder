@@ -33,6 +33,31 @@ app.use("/test",(req,res)=>{
    res.send("Hiw test from server");
 })
 
+
+
+app.use("/profile",(rea,res,next)=>{
+
+   console.log("Response!!")
+   // res.send("Getting response from server1")
+   next()
+
+},
+(req,res,next)=>{
+   console.log("respopnse 2!")
+   // res.send("Getting Response from server 2")
+   next();
+},
+
+(req,res,next)=>{
+   console.log("Resposnse from 3")
+   res.send("Getting Response from server 3")
+   
+}
+)
+
+
+
+
 app.use("/",(req,res)=>{
    res.send("Namste Prateek");
 })
