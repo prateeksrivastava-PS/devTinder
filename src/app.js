@@ -1,54 +1,33 @@
-const express=require("express");
+const express = require("express");
 
+const app = express();
 
-const {adminAuth,userAuth}=require("./mioddlewares/auth")
+const connectDB = require("./config/database");
 
-const app=express();
+const userModel = require("./models/user");
 
-
-
-app.use("/admin",adminAuth)
-// Here implement middleware
-
-app.get("/user",userAuth,(req,res)=>{
-   console.log("User Api Hit")
-   res.send({
-      userName:"Prateek",
-      lastName:"Srivastava"
-   })
-
-})
-
-app.post("/admin/getAllData",(req,res)=>
-   {
-        res.send("All Data Send")
-})
-
-//Error Handling.....
-
-app.get("/login",(req,res)=>{
-   try{
-      throw new Error("fhsjfh")
-      res.send("User Data Send ")
-   }catch(err){
-      res.status(501).send("Internal Error From Server")
-   }
-
-})
-
-// Wild Card Eror Handing
-
-app.get("/profile",(req,res)=>{
-      throw new Error("jfhsdjh");
-      res.send("Profile Data Fetch Succefuly");
-})
-
-app.use("/",(err,req,res,next)=>{
-   if(err){
-      res.status(404).send("Somthing went wrong from server side....")
-   }
-
-})
-app.listen(7777,()=>{
-    console.log("Server start listening on port 7777...")
+app.post("/signup", async (req, res) => {
+  const user = new userModel({
+    firstName: "Prateek",
+    lastName: "Srivastava",
+    emailId: "prateek.srivastava6397@gmail.com",
+    password: "Kobe@200",
+  });
+  try {
+    await user.save();
+    res.send("Sucessfuly signup acount !!");
+  } catch (err) {
+    res.status(400).send("Error TO Saving  Data !!!" + err.message);
+  }
 });
+
+connectDB()
+  .then(() => {
+    console.log("DataBase conection stablized...");
+    app.listen(7777, () => {
+      console.log("Server start listening on port 7777...");
+    });
+  })
+  .catch((err) => {
+    console.error("Database Error:", err);
+  });
