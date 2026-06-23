@@ -5,17 +5,14 @@ const mongoose= require("mongoose");
 
 const connectDB=require("./config/database");
 
-const userModel=require("./models/user")
+const userModel= require("./models/user")
 
-
+app.use(express.json())
 app.post("/signup", async (req,res)=>{
 
-  const user= new userModel({
-    firstName:"Prateek",
-    lastName:"Srivastava",
-    emailId:"prateek@2001gmail.com",
-    password:"Kobe@2001"
-  })
+  console.log(req.body)
+
+  const user= new userModel(req.body)
 
   try{
 
@@ -33,7 +30,7 @@ app.post("/signup", async (req,res)=>{
 connectDB()
 .then(()=>{
   console.log("Server coneccted suceesfuly..");
-  app.listen(7777,()=>{
+  app.listen (7777,()=>{
     console.log("Server start listining on port 7777....")
   })  
 
