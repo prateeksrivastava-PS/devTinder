@@ -92,7 +92,7 @@ app.patch("/user{/:userId}", async (req, res) => {
     // Remove emailId so it isn't updated
     delete data.emailId;
 
-    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills"];
+    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills","photoUrl","password"];
 
     const isUpdateAllowed = Object.keys(data).every((k) =>
       ALLOWED_UPDATES.includes(k),
