@@ -6,19 +6,65 @@ const mongoose = require("mongoose");
 const connectDB = require("./config/database");
 
 const userModel = require("./models/user");
+const { validationSignUpData } = require("./utils/validation");
+
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
+
+//SignUp Api
 app.post("/signup", async (req, res) => {
-  console.log(req.body);
-
-  const user = new userModel(req.body);
-
   try {
-    await user.save();
+    //Validtion of data
+    validationSignUpData(req);
 
-    res.send("Data Sucesfully save...");
+    const { firstName, lastName, emailId, password } = req.body;
+
+    // Encrypt the Password
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+
+    //Creating new instance of the User model.
+    const user = new userModel({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
+    await user.save();
+    res.send("User Added suceessfully!");
   } catch (err) {
     res.status(400).send(err.message);
+  }
+});
+
+//Login Api
+
+app.post("/login", async (req, res) => {
+  try {
+    //geting emailId from db
+    const { emailId, password } = req.body;
+
+    const user = await userModel.findOne({ emailId });
+
+    if (!user) {
+      return res.status(404).send("User  not found");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send("Invalid password");
+    }
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(200).json({
+      message: "Successfully Login",
+      user: userObj,
+    });
+  } catch (err) {
+    res.status(400).send(err);
   }
 });
 
@@ -92,7 +138,15 @@ app.patch("/user{/:userId}", async (req, res) => {
     // Remove emailId so it isn't updated
     delete data.emailId;
 
-    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills","photoUrl","password"];
+    const ALLOWED_UPDATES = [
+      "photoUrl",
+      "about",
+      "gender",
+      "age",
+      "skills",
+      "photoUrl",
+      "password",
+    ];
 
     const isUpdateAllowed = Object.keys(data).every((k) =>
       ALLOWED_UPDATES.includes(k),
