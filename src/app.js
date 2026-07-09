@@ -9,11 +9,16 @@ const userModel = require("./models/user");
 const { validationSignUpData } = require("./utils/validation");
 
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 
 app.use(express.json());
+const jwt = require('jsonwebtoken');
+const {userAuth}= require("./mioddlewares/auth")
 
 //SignUp Api
 app.post("/signup", async (req, res) => {
+
   try {
     //Validtion of data
     validationSignUpData(req);
@@ -22,8 +27,6 @@ app.post("/signup", async (req, res) => {
 
     // Encrypt the Password
     const passwordHash = await bcrypt.hash(password, 10);
-    console.log(passwordHash);
-
     //Creating new instance of the User model.
     const user = new userModel({
       firstName,
@@ -52,25 +55,50 @@ app.post("/login", async (req, res) => {
       return res.status(404).send("User  not found");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const isPasswordValid = await user.validatePassword(password);
+       
+    if (isPasswordValid) {
+
+      const userObj = user.toObject();
+      
+      delete userObj.password;
+       // Create a JWT Token
+        
+    
+       const token=  await user.getJWT();
+       // Add the token to cookie and send the response back to the user
+
+       res.cookie("token",token,{httpOnly:true}
+       )
+      res.status(200).json({
+        message: "Successfully Login",
+        user: userObj,
+      });
+    } else {
       return res.status(401).send("Invalid password");
     }
-    const userObj = user.toObject();
-    delete userObj.password;
-
-    res.status(200).json({
-      message: "Successfully Login",
-      user: userObj,
-    });
   } catch (err) {
     res.status(400).send(err);
   }
 });
 
+// Profile APi
+
+app.get("/profile",userAuth,async (req,res)=>{
+try{
+ const user= req.userData
+ res.send(user)
+}catch(err){
+   
+ res.status(404).send(err.message);
+}
+  
+
+})
+
 //  Get the db data
 
-app.get("/user", async (req, res) => {
+app.get("/user",userAuth, async (req, res) => {
   const userEmail = req.body.emailId;
 
   try {
@@ -87,7 +115,7 @@ app.get("/user", async (req, res) => {
 
 // Get  the  all data from user
 
-app.get("/feed", async (req, res) => {
+app.get("/feed",userAuth, async (req, res) => {
   try {
     const allUserData = await userModel.find({});
     await res.status(200).send(allUserData);
@@ -98,11 +126,10 @@ app.get("/feed", async (req, res) => {
 
 //  finding old one  data from common data
 
-app.get("/userfindOne", async (req, res) => {
+app.get("/userfindOne",userAuth, async (req, res) => {
   const userId = req.body.emailId;
   try {
     const getUserData = await userModel.findOne({ emailId: userId });
-    console.log("Findta", getUserData);
     if (getUserData.length === 0) {
       res.status(404).send("User Data Not found....");
     } else {
@@ -119,7 +146,6 @@ app.delete("/user", async (req, res) => {
   const userId = req.body.userId;
   try {
     const user = await userModel.findByIdAndDelete({ _id: userId });
-    console.log("Deleted data", userId);
     res.status(200).send("Data Deleted sucessfuly..");
   } catch (err) {
     res.status(400).send("Something went wrong..");

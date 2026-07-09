@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
 const validator = require("validator");
+const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
 
 const userSchema = mongoose.Schema(
   {
@@ -22,20 +24,18 @@ const userSchema = mongoose.Schema(
 
       validate(value) {
         if (!validator.isEmail(value)) {
-             throw new Error("Email is not valid..")
+          throw new Error("Email is not valid..");
         }
       },
     },
     password: {
       type: String,
       require: true,
-      validate(value){
-        if(! validator.isStrongPassword(value))
-        {
-            throw new Error("Please enter strong password");
-            
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Please enter strong password");
         }
-      }
+      },
     },
     age: {
       type: Number,
@@ -53,13 +53,12 @@ const userSchema = mongoose.Schema(
       type: String,
       default:
         "https://www.shutterstock.com/image-vector/isolated-object-avatar-dummy-symbol-260nw-1290296656.jpg",
-    
-    validate(value){
-        if(!validator.isURL(value)){
-        throw new Error("Inavliad Image url..")
+
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Inavliad Image url..");
         }
-    }
-    
+      },
     },
     about: {
       type: String,
@@ -71,5 +70,25 @@ const userSchema = mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Method for genrating JWT
+
+userSchema.methods.getJWT = async function () {
+  const user = this;
+
+  const token = await jwt.sign({ _id: user._id }, "KOBE@DEV$2021", {
+    expiresIn: "1d",
+  });
+
+  return token;
+};
+
+userSchema.methods.validatePassword= async function(inputPassword){
+
+ const isPasswordValid = await bcrypt.compare(inputPassword, this.password);
+
+ return isPasswordValid;
+
+}
 
 module.exports = mongoose.model("User", userSchema);
