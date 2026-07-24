@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema(
   {
     firstName: {
       type: String,
+      index:true,
       require: true,
       minLength: 2,
       maxLength: 40,
@@ -70,6 +71,13 @@ const userSchema = mongoose.Schema(
   },
   { timestamps: true },
 );
+
+//Compound Index
+
+userSchema.index({
+  firstName:1,
+  lastName:1
+});
 
 // Method for genrating JWT
 
