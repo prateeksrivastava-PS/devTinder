@@ -4,16 +4,18 @@ const connectionRequestSchema = new mongoose.Schema(
   {
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref:"User", // refrence (Relation)  to the user collection
       require: true,
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
+       ref:"User",
       require: true,
     },
     status: {
       type: String,
       enum: {
-        values: ["ignored", "intrested", "accepeted", "rejected"],
+        values: ["ignored", "interested", "accepted", "rejected"],
         message: "{VALUE} is incorrect  status type",
       },
       require: true,
@@ -32,7 +34,7 @@ connectionRequestSchema.pre("save", function (next) {
   if (this.toUserId.equals(this.fromUserId)) {
     throw new Error("Cant't send request yourself!");
   }
-  next();
+  next ;
 });
 
 const connectionReuestModel = new mongoose.model(

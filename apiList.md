@@ -18,7 +18,7 @@ connectionRequestRouter
 - POST /request/review/rejected/:requestedId
 
 userRouter
-- GET/user/connections
 - GET/requests/received
+- GET/user/connections
 - GET/feed -Gets you the profiles of other user on plateforms 
 -
