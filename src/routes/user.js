@@ -60,39 +60,30 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 });
 
 userRouter.get("/feed", userAuth, async (req, res) => {
-  // User should see all the user cards excepts
-  // his own card
-  // his connections
-  // ignored pepople
-  // alreday sent the connection request
-
   try {
     const loggedInUser = req.userData;
 
-    // Implementing Pagination Api logic
+    // Pagination
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    let limit = parseInt(req.query.limit) || 10;
 
-    const page= parseInt(req.query.page) || 1;
-    let limit= parseInt(req.query.limit) || 10;
-    // adding  corner case for pagination 
-    limit=limit>50?50 :limit;
+    limit = Math.min(limit, 50);
 
-    const skip= (page-1)*limit
+    const skip = (page - 1) * limit;
 
-    console.log("Logged in user:", loggedInUser);
-    console.log("User ID:", loggedInUser?._id);
-
-    //Find all conection request (sent + received)
-
+    // Find all sent and received connection requests
     const connectionRequests = await connectionRequest
       .find({
-        $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+        $or: [
+          { fromUserId: loggedInUser._id },
+          { toUserId: loggedInUser._id },
+        ],
       })
       .select("fromUserId toUserId")
       .populate("fromUserId", "firstName")
       .populate("toUserId", "firstName");
 
-    // Here hide the request
-
+    // Hide users who have a connection request
     const hideUsersFromFeed = new Set();
 
     connectionRequests.forEach((request) => {
@@ -104,21 +95,34 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         hideUsersFromFeed.add(request.toUserId._id.toString());
       }
     });
-    console.log(hideUsersFromFeed);
 
-    // find user which has not send or recivie request from logged in user(not include the hide fromuser feed)
-
-    const users = await user.find({
+    // Common filter for find and countDocuments
+    const filter = {
       $and: [
         { _id: { $nin: Array.from(hideUsersFromFeed) } },
         { _id: { $ne: loggedInUser._id } },
       ],
-    }).select(user_safe_data).skip(skip).limit(limit);
+    };
 
-    res.send(users);
+    // Fetch paginated users
+    const users = await user
+      .find(filter)
+      .select(user_safe_data)
+      .skip(skip)
+      .limit(limit);
+
+    // Count total available users
+    const totalRecords = await user.countDocuments(filter);
+
+    res.json({
+      data: users,
+      currentPage: page,
+      totalPages: Math.ceil(totalRecords / limit),
+      totalRecords,
+    });
   } catch (err) {
+    console.log("Feed API Error:", err);
     res.status(400).json({ message: err.message });
   }
 });
-
 module.exports = userRouter;

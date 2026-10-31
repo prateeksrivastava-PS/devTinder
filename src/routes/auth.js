@@ -32,8 +32,15 @@ authRouter.post("/signup", async (req, res) => {
       password: passwordHash,
     });
 
-    await user.save();
-    res.send("User Added suceessfully!");
+    const saveduser=await user.save();
+      const token=  await saveduser.getJWT();
+       // Add the token to cookie and send the response back to the user
+
+       res.cookie("token",token,{
+        expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+       }
+       )
+    res.json({message:"User Added suceessfully!",data:saveduser});
   }catch(err) {
     res.status(400).send(err.message);
   }

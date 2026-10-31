@@ -11,6 +11,15 @@ const userRouter=require("./routes/user");
 const restaurantFoodMenuRouter= require("./routes/restaurantFoodMenu")
 
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
+app.use(express.json());
+
 app.use("/",authRouter);
 app.use("/",profileRoute);
 app.use("/",requestRouter);
@@ -18,7 +27,6 @@ app.use("/",userRouter);
 app.use("/",restaurantFoodMenuRouter)
 
 
-app.use(express.json());
 
 
 connectDB()
