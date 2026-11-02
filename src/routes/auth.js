@@ -1,19 +1,16 @@
- const express= require("express");
+const express = require("express");
 
-const authRouter= express.Router();
+const authRouter = express.Router();
 
 const userModel = require("../models/user");
 const { validationSignUpData } = require("../utils/validation");
-const jwt= require("jsonwebtoken");
- const {userAuth}= require("../mioddlewares/auth");
-
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("../mioddlewares/auth");
 
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 authRouter.use(cookieParser());
 authRouter.use(express.json());
-
-
 
 authRouter.post("/signup", async (req, res) => {
   try {
@@ -32,16 +29,18 @@ authRouter.post("/signup", async (req, res) => {
       password: passwordHash,
     });
 
-    const saveduser=await user.save();
-      const token=  await saveduser.getJWT();
-       // Add the token to cookie and send the response back to the user
+    const saveduser = await user.save();
+    const token = await saveduser.getJWT();
+    // Add the token to cookie and send the response back to the user
 
-       res.cookie("token",token,{
-        expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-       }
-       )
-    res.json({message:"User Added suceessfully!",data:saveduser});
-  }catch(err) {
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+    });
+    res.json({ message: "User Added suceessfully!", data: saveduser });
+  } catch (err) {
     res.status(400).send(err.message);
   }
 });
@@ -60,20 +59,21 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const isPasswordValid = await user.validatePassword(password);
-       
+
     if (isPasswordValid) {
-
       const userObj = user.toObject();
-      
-      delete userObj.password;
-       // Create a JWT Token
-       const token=  await user.getJWT();
-       // Add the token to cookie and send the response back to the user
 
-       res.cookie("token",token,{
-        expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-       }
-       )
+      delete userObj.password;
+      // Create a JWT Token
+      const token = await user.getJWT();
+      // Add the token to cookie and send the response back to the user
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 2 * 24 * 60 * 60 * 1000,
+      });
       res.status(200).json({
         message: "Successfully Login",
         user: userObj,
@@ -86,19 +86,14 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-authRouter.post("/logout",userAuth, (req,res)=>{
-  try{
- const {token}=req.cookies
- res.clearCookie("token");
-  res.status(200).send("User sucessfuly logout.")
-  }catch(err){
-    res.status(400).send("Something went wrong.")
+authRouter.post("/logout", userAuth, (req, res) => {
+  try {
+    const { token } = req.cookies;
+    res.clearCookie("token");
+    res.status(200).send("User sucessfuly logout.");
+  } catch (err) {
+    res.status(400).send("Something went wrong.");
   }
- 
-  
-})
+});
 
-
-
-
-module.exports=authRouter;
+module.exports = authRouter;
