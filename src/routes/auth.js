@@ -153,14 +153,27 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-authRouter.post("/logout", userAuth, (req, res) => {
-  try {
-    const { token } = req.cookies;
-    res.clearCookie("token");
-    res.status(200).send("User sucessfuly logout.");
-  } catch (err) {
-    res.status(400).send("Something went wrong.");
-  }
+// authRouter.post("/logout", userAuth, (req, res) => {
+//   try {
+//     const { token } = req.cookies;
+//     res.clearCookie("token");
+//     res.status(200).send("User sucessfuly logout.");
+//   } catch (err) {
+//     res.status(400).send("Something went wrong.");
+//   }
+// });
+
+authRouter.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
+
+  return res.status(200).json({
+    message: "User successfully logged out",
+  });
 });
 
 module.exports = authRouter;
